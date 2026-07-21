@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>
+
+Blueprint Generator
+
+</title>
+
+<link
+href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+rel="stylesheet">
+
+<link
+rel="stylesheet"
+href="style.css">
+
+</head>
+
+<body>
+
+<nav class="navbar navbar-dark bg-primary">
+
+<div class="container">
+
+<a
+class="navbar-brand"
+href="index.html">
+
+AI Question Paper Generator
+
+</a>
+
+</div>
+
+</nav>
+
+<div class="container mt-5">
+
+<div class="card shadow">
+
+<div class="card-header bg-success text-white">
+
+<h3>
+
+Question Paper Blueprint
+
+</h3>
+
+</div>
+
+<div class="card-body">
+
+<p>
+
+Fill the number of questions required from each chapter.
+
+</p>
+
+<div class="table-responsive">
+
+<table
+class="table table-bordered table-striped"
+id="blueprintTable">
+
+<thead class="table-primary">
+
+<tr>
+
+<th>
+
+Chapter
+
+</th>
+
+<th>
+
+1 Mark
+
+</th>
+
+<th>
+
+2 Marks
+
+</th>
+
+<th>
+
+3 Marks
+
+</th>
+
+<th>
+
+4 Marks
+
+</th>
+
+<th>
+
+5 Marks
+
+</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+</tbody>
+
+</table>
+
+</div>
+
+<div class="mt-4">
+
+<h5>
+
+Total Questions :
+<span id="totalQuestions">
+
+0
+
+</span>
+
+</h5>
+
+<h5>
+
+Total Marks :
+<span id="totalMarks">
+
+0
+
+</span>
+
+</h5>
+
+</div>
+
+<div class="text-center mt-4">
+
+<button
+class="btn btn-success btn-lg"
+onclick="saveBlueprint()">
+
+Save Blueprint
+
+</button>
+
+<a
+href="generate.html"
+class="btn btn-primary btn-lg ms-3">
+
+Generate Paper →
+
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<script src="script.js"></script>
+
+<script>
+
+const questionBank =
+JSON.parse(localStorage.getItem("questionBank")) || [];
+
+const chapters =
+[...new Set(questionBank.map(q=>q.chapter))];
+
+const tbody =
+document.querySelector("#blueprintTable tbody");
+
+chapters.forEach(chapter=>{
+
+let row=`
+
+<tr>
+
+<td>
+
+${chapter}
+
+</td>
+
+<td><input type="number" class="form-control mark1" value="0" min="0"></td>
+
+<td><input type="number" class="form-control mark2" value="0" min="0"></td>
+
+<td><input type="number" class="form-control mark3" value="0" min="0"></td>
+
+<td><input type="number" class="form-control mark4" value="0" min="0"></td>
+
+<td><input type="number" class="form-control mark5" value="0" min="0"></td>
+
+</tr>
+
+`;
+
+tbody.innerHTML+=row;
+
+});
+
+function calculateTotals(){
+
+let totalQ=0;
+
+let totalM=0;
+
+document.querySelectorAll("#blueprintTable tbody tr").forEach(row=>{
+
+let q1=parseInt(row.querySelector(".mark1").value)||0;
+
+let q2=parseInt(row.querySelector(".mark2").value)||0;
+
+let q3=parseInt(row.querySelector(".mark3").value)||0;
+
+let q4=parseInt(row.querySelector(".mark4").value)||0;
+
+let q5=parseInt(row.querySelector(".mark5").value)||0;
+
+totalQ += q1+q2+q3+q4+q5;
+
+totalM +=
+(q1*1)+
+(q2*2)+
+(q3*3)+
+(q4*4)+
+(q5*5);
+
+});
+
+document.getElementById("totalQuestions").innerHTML=totalQ;
+
+document.getElementById("totalMarks").innerHTML=totalM;
+
+}
+
+document.querySelectorAll("input").forEach(input=>{
+
+input.addEventListener("input",calculateTotals);
+
+});
+
+function saveBlueprint(){
+
+let blueprint=[];
+
+document.querySelectorAll("#blueprintTable tbody tr").forEach(row=>{
+
+let cells=row.querySelectorAll("td");
+
+blueprint.push({
+
+chapter:cells[0].innerText,
+
+one:parseInt(cells[1].querySelector("input").value)||0,
+
+two:parseInt(cells[2].querySelector("input").value)||0,
+
+three:parseInt(cells[3].querySelector("input").value)||0,
+
+four:parseInt(cells[4].querySelector("input").value)||0,
+
+five:parseInt(cells[5].querySelector("input").value)||0
+
+});
+
+});
+
+localStorage.setItem(
+
+"blueprint",
+
+JSON.stringify(blueprint)
+
+);
+
+alert("Blueprint Saved Successfully.");
+
+}
+
+</script>
+
+</body>
+
+</html>
