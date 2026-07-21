@@ -37,102 +37,93 @@ function extractQuestions() {
 
 function parseText(text){
 
-    questionBank = [];
+    questionBank=[];
 
-    let currentChapter = "General";
+    let currentChapter="General";
 
-    let currentMarks = 1;
+    let currentMarks=1;
 
-    const lines = text.split(/\r?\n/);
+    const lines=text.split(/\r?\n/);
 
-    lines.forEach(function(line){
+    lines.forEach(line=>{
 
-        line = line.trim();
+        line=line.trim();
 
-        if(line === "") return;
+        if(line==="") return;
 
-        if(line.toUpperCase().startsWith("CHAPTER")){
+        // Detect chapter
 
-            currentChapter = line.replace(/chapter\s*:?\s*/i,"");
+        if(/^chapter/i.test(line)){
 
-            return;
-
-        }
-
-        const section = line.match(/SECTION\s*([A-E])/i);
-
-        if(section){
-
-            const map = {
-                A:1,
-                B:2,
-                C:3,
-                D:4,
-                E:5
-            };
-
-            currentMarks = map[section[1].toUpperCase()] || 1;
+            currentChapter=line.replace(/chapter\s*:?\s*/i,"").trim();
 
             return;
 
         }
 
-        const mark = line.match(/^\[(\d)\]/);
+        // Detect marks written at end
 
-        if(mark){
+        let endMarks=line.match(/\((\d)\)\s*$/);
 
-            currentMarks = parseInt(mark[1]);
+        if(endMarks){
 
-            line = line.replace(/^\[\d\]\s*/,"");
+            currentMarks=parseInt(endMarks[1]);
+
+            line=line.replace(/\((\d)\)\s*$/,"").trim();
+
+        }
+
+        // Detect marks written like [3]
+
+        let bracket=line.match(/^\[(\d)\]/);
+
+        if(bracket){
+
+            currentMarks=parseInt(bracket[1]);
+
+            line=line.replace(/^\[\d\]/,"").trim();
 
         }
 
-        if(/^(Q\.?\s*\d+|\d+[.)])/i.test(line)){
+        // Remove Question Number
 
-            line = line.replace(/^(Q\.?\s*\d+|\d+[.)])\s*/i,"");
+        line=line.replace(/^Q\.?\s*\d+\s*[\.:]?\s*/i,"");
 
-            questionBank.push({
+        line=line.replace(/^\d+[\.)]\s*/,"");
 
-                chapter: currentChapter,
+        // Ignore headings
 
-                marks: currentMarks,
+        if(line.length<5) return;
 
-                question: line
+        // Save Question
 
-            });
+        questionBank.push({
 
-        }
+            chapter:currentChapter,
+
+            marks:currentMarks,
+
+            question:line
+
+        });
 
     });
 
     localStorage.setItem(
+
         "questionBank",
+
         JSON.stringify(questionBank)
+
     );
 
-    const status = document.getElementById("status");
+    document.getElementById("status").className="alert alert-success";
 
-    if(questionBank.length>0){
+    document.getElementById("status").innerHTML=
 
-        status.className="alert alert-success";
-
-        status.innerHTML=
-            questionBank.length+
-            " questions imported successfully.";
-
-    }else{
-
-        status.className="alert alert-warning";
-
-        status.innerHTML=
-            "No questions detected in this DOCX file.";
-
-    }
-
-    console.log(questionBank);
+        questionBank.length+" Questions Imported Successfully";
 
 }
-
 function getQuestions(chapter,marks){
 
     return questionBank.filter(q=>
