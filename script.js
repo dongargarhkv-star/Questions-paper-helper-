@@ -1,104 +1,149 @@
-// ==========================================
-// AI Question Paper Generator
-// Developed by Amit Yerpude
-// ==========================================
+// Smart parser for AI Question Paper Generator
 
-// Stores all extracted questions
 let questionBank = [];
-
-// ------------------------------------------
-// Extract Questions from DOCX
-// ------------------------------------------
 
 function extractQuestions() {
 
-    const fileInput = document.getElementById("questionBank");
+    const input = document.getElementById("questionBank");
 
-    if (!fileInput.files.length) {
-
+    if (!input || input.files.length === 0) {
         alert("Please select a DOCX file.");
-
         return;
-
     }
-
-    const file = fileInput.files[0];
 
     const reader = new FileReader();
 
-    reader.onload = function(event) {
+    reader.onload = function (event) {
 
         mammoth.extractRawText({
-
             arrayBuffer: event.target.result
-
         })
-
         .then(function(result){
-
-            processQuestionBank(result.value);
-
+            parseText(result.value);
         })
-
         .catch(function(error){
+            console.error(error);
 
-            console.log(error);
-
-            alert("Unable to read DOCX.");
-
+            document.getElementById("status").className = "alert alert-danger";
+            document.getElementById("status").innerHTML =
+                "Unable to read the DOCX file.";
         });
 
     };
 
-    reader.readAsArrayBuffer(file);
+    reader.readAsArrayBuffer(input.files[0]);
 
 }
 
-// ------------------------------------------
-// Read Question Bank
-// ------------------------------------------
-
-function processQuestionBank(text){
+function parseText(text){
 
     questionBank = [];
 
     let currentChapter = "General";
 
-    const lines = text.split("\n");
+    let currentMarks = 1;
 
-    lines.forEach(line=>{
+    const lines = text.split(/\r?\n/);
+
+    lines.forEach(function(line){
 
         line = line.trim();
 
-        if(line==="") return;
-
-        // Detect Chapter
+        if(line === "") return;
 
         if(line.toUpperCase().startsWith("CHAPTER")){
 
-            currentChapter = line.replace("CHAPTER:","").trim();
+            currentChapter = line.replace(/chapter\s*:?\s*/i,"");
 
             return;
 
         }
 
-        // Detect Marks
+        const section = line.match(/SECTION\s*([A-E])/i);
 
-        let match = line.match(/^\[(\d)\]/);
+        if(section){
 
-        if(match){
+            const map = {
+                A:1,
+                B:2,
+                C:3,
+                D:4,
+                E:5
+            };
 
-            let marks = parseInt(match[1]);
+            currentMarks = map[section[1].toUpperCase()] || 1;
 
-            let question = line.replace(match[0],"").trim();
+            return;
+
+        }
+
+        const mark = line.match(/^\[(\d)\]/);
+
+        if(mark){
+
+            currentMarks = parseInt(mark[1]);
+
+            line = line.replace(/^\[\d\]\s*/,"");
+
+        }
+
+        if(/^(Q\.?\s*\d+|\d+[.)])/i.test(line)){
+
+            line = line.replace(/^(Q\.?\s*\d+|\d+[.)])\s*/i,"");
 
             questionBank.push({
 
                 chapter: currentChapter,
 
-                marks: marks,
+                marks: currentMarks,
 
-                question: question
+                question: line
+
+            });
+
+        }
+
+    });
+
+    localStorage.setItem(
+        "questionBank",
+        JSON.stringify(questionBank)
+    );
+
+    const status = document.getElementById("status");
+
+    if(questionBank.length>0){
+
+        status.className="alert alert-success";
+
+        status.innerHTML=
+            questionBank.length+
+            " questions imported successfully.";
+
+    }else{
+
+        status.className="alert alert-warning";
+
+        status.innerHTML=
+            "No questions detected in this DOCX file.";
+
+    }
+
+    console.log(questionBank);
+
+}
+
+function getQuestions(chapter,marks){
+
+    return questionBank.filter(q=>
+
+        q.chapter===chapter &&
+
+        q.marks===marks
+
+    );
+
+}                question: question
 
             });
 
