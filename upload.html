@@ -262,6 +262,45 @@ No Question Bank Uploaded.
 <script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
 
 <script src="script.js"></script>
+  <script>
+
+function saveDetails(){
+
+localStorage.setItem(
+"schoolName",
+document.getElementById("schoolName").value
+);
+
+localStorage.setItem(
+"examName",
+document.getElementById("examName").value
+);
+
+localStorage.setItem(
+"className",
+document.getElementById("className").value
+);
+
+localStorage.setItem(
+"subject",
+document.getElementById("subject").value
+);
+
+localStorage.setItem(
+"maxMarks",
+document.getElementById("maxMarks").value
+);
+
+localStorage.setItem(
+"duration",
+document.getElementById("duration").value
+);
+
+window.location.href = "blueprint.html";
+
+}
+
+</script>
 
 </body>
 
