@@ -557,33 +557,24 @@ console.log("Before Validation");
 console.table(questionBank);
 function finalizeQuestionBank(){
 
-    localStorage.setItem(
-        "questionBank",
-        JSON.stringify(questionBank)
-    );
+    console.log("Before Validation");
+    console.table(questionBank);
 
-    localStorage.setItem(
-        "chapters",
-        JSON.stringify([...chapters])
-    );
 
-    console.log("Saved Questions:", questionBank);
-    console.log("Saved Chapters:", [...chapters]);
+    validateQuestions();
+
+    removeDuplicates();
+
+    sortQuestionBank();
+
+
+    saveQuestionBank();
+
+
+    console.log("After Validation");
+    console.table(questionBank);
 
 }
-//function finalizeQuestionBank(){
-//
-  //  validateQuestions();
-//
-  //  removeDuplicates();
-//
-  //  sortQuestionBank();
- //console.log("After Validation");
-//console.table(questionBank);
-
-  //  saveQuestionBank();
-
-//}
 
 // =====================================================
 // Save Question Bank
