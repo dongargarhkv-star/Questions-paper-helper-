@@ -139,10 +139,13 @@ function startParser(rawText){
 // ========================================================
 // Parse Paragraphs
 // ========================================================
-
 function parseParagraphs(paragraphs){
 
+    console.log(paragraphs);
+
     paragraphs.forEach(function(paragraph){
+
+        console.log("Reading:", paragraph);
 
         parseParagraph(paragraph);
 
@@ -151,6 +154,17 @@ function parseParagraphs(paragraphs){
     finalizeQuestionBank();
 
 }
+//function parseParagraphs(paragraphs){
+//
+  //  paragraphs.forEach(function(paragraph){
+//
+  //      parseParagraph(paragraph);
+//
+  //  });
+//
+  //  finalizeQuestionBank();
+
+//}
 
 // ========================================================
 // Parse One Paragraph
