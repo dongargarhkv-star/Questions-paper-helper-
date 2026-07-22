@@ -557,21 +557,17 @@ console.log("Before Validation");
 console.table(questionBank);
 function finalizeQuestionBank(){
 
-    console.log("Before Validation");
-    console.table(questionBank);
-
-
     validateQuestions();
 
     removeDuplicates();
 
     sortQuestionBank();
 
-
     saveQuestionBank();
 
+    showStatistics();
 
-    console.log("After Validation");
+    console.log("Final Question Bank");
     console.table(questionBank);
 
 }
