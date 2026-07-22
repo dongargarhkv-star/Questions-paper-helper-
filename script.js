@@ -555,8 +555,11 @@ function sortQuestionBank(){
 // =====================================================
 
 function finalizeQuestionBank(){
-console.log("Before Validation");
-console.table(questionBank);
+
+    console.log("Before Validation");
+    console.table(questionBank);
+
+
     validateQuestions();
 
     removeDuplicates();
@@ -576,7 +579,6 @@ console.table(questionBank);
     showStatistics();
 
 }
-
 // =====================================================
 // Save Question Bank
 // =====================================================
