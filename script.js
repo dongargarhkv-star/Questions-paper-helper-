@@ -369,13 +369,13 @@ function cleanQuestion(line){
 
     return line
 
-        .replace(/^q\s*\d+\.?\s*/i,"")
+        .replace(/^q\s*\d+[\.:)]\s*/i,"")
 
-        .replace(/^question\s*\d+\.?\s*/i,"")
+        .replace(/^question\s*\d+[\.:)]\s*/i,"")
 
-        .replace(/^\d+\.\s*/,"")
+        .replace(/^\d+[\.\)]\s*/,"")
 
-        .replace(/^\d+\)\s*/,"")
+        .replace(/\(\d+\s*marks?\)/i,"")
 
         .trim();
 
