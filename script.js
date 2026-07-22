@@ -227,19 +227,19 @@ let lines = paragraph
         // Detect Question
         // -----------------------
 
-console.log("LINE:", line);
+console.log("CHECK LINE:", line);
 
-if(isQuestion(line)){
+if(line.startsWith("Q")){
 
-    console.log("QUESTION FOUND:", line);
+    console.log("FORCE QUESTION:", line);
 
     questionBank.push({
 
         chapter: currentChapter,
         section: currentSection,
         marks: currentMarks,
-        type: detectQuestionType(line),
-        question: cleanQuestion(line)
+        type: "Theory",
+        question: line
 
     });
 
