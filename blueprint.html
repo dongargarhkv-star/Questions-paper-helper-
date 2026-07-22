@@ -177,12 +177,17 @@ Generate Paper →
 <script src="script.js"></script>
 
 <script>
+console.log(questionBank);
+console.log(chapters);
 
 const questionBank =
 JSON.parse(localStorage.getItem("questionBank")) || [];
 
 const chapters =
-[...new Set(questionBank.map(q=>q.chapter))];
+[...new Set(questionBank.map(q => q.chapter))];
+
+console.log("Question Bank:", questionBank);
+console.log("Chapters:", chapters);
 
 const tbody =
 document.querySelector("#blueprintTable tbody");
