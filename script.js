@@ -213,16 +213,19 @@ let lines = paragraph
         // Detect Marks Heading
         // -----------------------
 
-        let marks = detectMarks(line);
+       let marks = detectMarks(line);
 
-        if(marks !== null){
+if(marks !== null){
 
-            currentMarks = marks;
+    currentMarks = marks;
 
-            if(isMarksHeading(line))
-                return;
+    // Return only if this line is a heading,
+    // not if it is an actual question.
+    if(isMarksHeading(line) && !isQuestion(line)){
+        return;
+    }
 
-        }
+}
 
         // -----------------------
         // Detect Question
