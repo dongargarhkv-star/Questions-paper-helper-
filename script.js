@@ -172,11 +172,11 @@ function parseParagraphs(paragraphs){
 
 function parseParagraph(paragraph){
 
-    let lines = paragraph
+let lines = paragraph
 
         .split("\n")
 
-        .map(x=>x.trim())
+        .map(x=>x.replace(/\uFEFF/g,"").trim())
 
         .filter(x=>x.length>0);
 
