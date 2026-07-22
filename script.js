@@ -1,14 +1,13 @@
 /*=========================================================
  AI Question Paper Generator
- Parser Version 2.0
- Part 1 : DOCX Reader & Initializer
+ Parser Version 3.0
+ Part 1 : Global Variables & DOCX Reader
 =========================================================*/
 
-// ========================================================
+// ======================================================
 // Global Variables
-// ========================================================
-alert("SCRIPT VERSION 3");
-let chapters = new Set();
+// ======================================================
+
 let questionBank = [];
 
 let currentChapter = "General";
@@ -23,40 +22,46 @@ const SECTION_MARKS = {
     E: 5
 };
 
-// ========================================================
-// Upload Question Bank
-// ========================================================
+// ======================================================
+// Upload DOCX
+// ======================================================
 
-function extractQuestions() {
+function extractQuestions(){
 
     const input = document.getElementById("questionBank");
 
-    if (!input) {
+    if(!input){
+
         alert("Question Bank input not found.");
         return;
+
     }
 
-    if (input.files.length === 0) {
+    if(input.files.length===0){
+
         alert("Please select a DOCX file.");
         return;
+
     }
 
-    const file = input.files[0];
+    const file=input.files[0];
 
-    if (!file.name.toLowerCase().endsWith(".docx")) {
+    if(!file.name.toLowerCase().endsWith(".docx")){
+
         alert("Only DOCX files are supported.");
         return;
+
     }
 
-    updateStatus("Reading DOCX file...", "info");
+    updateStatus("Reading DOCX file...","info");
 
-    const reader = new FileReader();
+    const reader=new FileReader();
 
-    reader.onload = function(e){
+    reader.onload=function(e){
 
         mammoth.extractRawText({
 
-            arrayBuffer: e.target.result
+            arrayBuffer:e.target.result
 
         })
 
@@ -64,9 +69,9 @@ function extractQuestions() {
 
             console.clear();
 
-            console.log("========= RAW DOCX =========");
+            console.log("========== RAW TEXT ==========");
             console.log(result.value);
-            console.log("============================");
+            console.log("==============================");
 
             startParser(result.value);
 
@@ -89,9 +94,9 @@ function extractQuestions() {
 
 }
 
-// ========================================================
+// ======================================================
 // Status Box
-// ========================================================
+// ======================================================
 
 function updateStatus(message,type="info"){
 
@@ -105,75 +110,21 @@ function updateStatus(message,type="info"){
 
 }
 
-// ========================================================
+// ======================================================
 // Start Parser
-// ========================================================
+// ======================================================
 
 function startParser(rawText){
 
     questionBank=[];
 
     currentChapter="General";
-
     currentSection="A";
-
     currentMarks=1;
 
-    const paragraphs = rawText
+    const lines = rawText
 
-        .split(/\n\s*\n/)
-
-        .map(p=>p.trim())
-
-        .filter(p=>p.length>0);
-
-    console.log("Paragraphs Found :", paragraphs.length);
-
-    parseParagraphs(paragraphs);
-
-}
-/*=========================================================
- Parser Version 2.0
- Part 2 : Smart Paragraph Parser
-=========================================================*/
-
-// ========================================================
-// Parse Paragraphs
-// ========================================================
-function parseParagraphs(paragraphs){
-
-    console.log(paragraphs);
-
-    paragraphs.forEach(function(paragraph){
-
-        console.log("Reading:", paragraph);
-
-        parseParagraph(paragraph);
-
-    });
-
-    finalizeQuestionBank();
-
-}
-//function parseParagraphs(paragraphs){
-//
-  //  paragraphs.forEach(function(paragraph){
-//
-  //      parseParagraph(paragraph);
-//
-  //  });
-//
-  //  finalizeQuestionBank();
-
-//}
-
-// ========================================================
-// Parse One Paragraph
-// ========================================================
-
-function parseParagraph(paragraph){
-
-let lines = paragraph
+        .replace(/\r/g,"")
 
         .split("\n")
 
@@ -181,23 +132,44 @@ let lines = paragraph
 
         .filter(x=>x.length>0);
 
+    console.log("Total Lines :",lines.length);
+
+    parseLines(lines);
+
+}
+/*=========================================================
+ AI Question Paper Generator
+ Parser Version 3.0
+ Part 2 : Smart Line Parser
+=========================================================*/
+
+// ======================================================
+// Parse Every Line
+// ======================================================
+
+function parseLines(lines){
+
     lines.forEach(function(line){
 
-        // -----------------------
-        // Detect Chapter
-        // -----------------------
-        console.log(line);
+        console.log("Reading :",line);
+
+        // -------------------------
+        // Chapter
+        // -------------------------
+
         if(isChapter(line)){
 
             currentChapter = extractChapter(line);
+
+            console.log("Chapter :",currentChapter);
 
             return;
 
         }
 
-        // -----------------------
-        // Detect Section
-        // -----------------------
+        // -------------------------
+        // Section
+        // -------------------------
 
         if(isSection(line)){
 
@@ -205,60 +177,76 @@ let lines = paragraph
 
             currentMarks = SECTION_MARKS[currentSection];
 
+            console.log("Section :",currentSection);
+
             return;
 
         }
 
-        // -----------------------
-        // Detect Marks Heading
-        // -----------------------
+        // -------------------------
+        // Marks written inside heading
+        // -------------------------
 
-       let marks = detectMarks(line);
+        let marks = detectMarks(line);
 
-if(marks !== null){
+        if(marks!==null && isMarksHeading(line)){
 
-    currentMarks = marks;
+            currentMarks = marks;
 
-    // Return only if this line is a heading,
-    // not if it is an actual question.
-    if(isMarksHeading(line) && !isQuestion(line)){
-        return;
-    }
+            return;
 
-}
+        }
 
-        // -----------------------
-        // Detect Question
-        // -----------------------
+        // -------------------------
+        // Question
+        // -------------------------
 
-//console.log("CHECK LINE:", line);
-console.log("TEST QUESTION CHECK:", line, isQuestion(line));
-if(line.startsWith("Q")){
+        if(isQuestion(line)){
 
-    console.log("FORCE QUESTION:", line);
+            let m = detectMarks(line);
 
-    questionBank.push({
+            if(m!==null)
+                currentMarks=m;
 
-        chapter: currentChapter,
-        section: currentSection,
-        marks: currentMarks,
-        type: "Theory",
-        question: line
+            questionBank.push({
+
+                chapter:currentChapter,
+
+                section:currentSection,
+
+                marks:currentMarks,
+
+                type:detectQuestionType(line),
+
+                question:cleanQuestion(line)
+
+            });
+
+            console.log("Question Added :",line);
+
+        }
 
     });
 
-}
-    });
+    finalizeQuestionBank();
 
 }
 
-// ========================================================
+// ======================================================
 // Detect Chapter
-// ========================================================
+// ======================================================
 
 function isChapter(line){
 
-    return /^(chapter|unit|lesson)/i.test(line);
+    line=line.toLowerCase();
+
+    return (
+
+        line.startsWith("chapter") ||
+
+        line.startsWith("unit")
+
+    );
 
 }
 
@@ -266,19 +254,21 @@ function extractChapter(line){
 
     return line
 
-        .replace(/^(chapter|unit|lesson)\s*:?\s*/i,"")
+        .replace(/^chapter\s*:?/i,"")
+
+        .replace(/^unit\s*:?/i,"")
 
         .trim();
 
 }
 
-// ========================================================
+// ======================================================
 // Detect Section
-// ========================================================
+// ======================================================
 
 function isSection(line){
 
-    return /^section\s+[A-E]/i.test(line);
+    return /^section\s+[a-e]/i.test(line);
 
 }
 
@@ -286,37 +276,48 @@ function extractSection(line){
 
     const m=line.match(/[A-E]/i);
 
-    return m ? m[0].toUpperCase() : "A";
+    if(m)
+
+        return m[0].toUpperCase();
+
+    return "A";
 
 }
 
-// ========================================================
+// ======================================================
 // Detect Marks
-// ========================================================
+// ======================================================
 
 function detectMarks(line){
 
-    line=line.toLowerCase();
+    const m=line.match(/\((\d)\s*marks?\)/i);
 
-    if(line.includes("1 mark")) return 1;
-    if(line.includes("2 mark")) return 2;
-    if(line.includes("3 mark")) return 3;
-    if(line.includes("4 mark")) return 4;
-    if(line.includes("5 mark")) return 5;
+    if(m)
 
-    if(line.includes("very short")) return 1;
-    if(line.includes("short answer i")) return 2;
-    if(line.includes("short answer ii")) return 3;
-    if(line.includes("long answer")) return 5;
-    if(line.includes("case study")) return 5;
+        return parseInt(m[1]);
+
+    if(line.match(/\b1\s*mark\b/i))
+        return 1;
+
+    if(line.match(/\b2\s*marks?\b/i))
+        return 2;
+
+    if(line.match(/\b3\s*marks?\b/i))
+        return 3;
+
+    if(line.match(/\b4\s*marks?\b/i))
+        return 4;
+
+    if(line.match(/\b5\s*marks?\b/i))
+        return 5;
 
     return null;
 
 }
 
-// ========================================================
+// ======================================================
 // Marks Heading
-// ========================================================
+// ======================================================
 
 function isMarksHeading(line){
 
@@ -324,120 +325,115 @@ function isMarksHeading(line){
 
     return (
 
-        line.includes("mark") ||
+        line.startsWith("section a") ||
 
-        line.includes("very short") ||
+        line.startsWith("section b") ||
 
-        line.includes("short answer") ||
+        line.startsWith("section c") ||
 
-        line.includes("long answer") ||
+        line.startsWith("section d") ||
 
-        line.includes("case study")
+        line.startsWith("section e")
 
     );
 
 }
 
-// ========================================================
+// ======================================================
 // Detect Question
-// ========================================================
+// ======================================================
 
 function isQuestion(line){
 
-    line = line.replace(/\uFEFF/g,"").trim();
-
-    if(line.length < 8)
-        return false;
-
-    if(ignoreLine(line))
-        return false;
-
-
     return (
 
-        /^q\.?\s*\d+/i.test(line) ||
+        /^q\s*\d+/i.test(line) ||
+
+        /^q\d+/i.test(line) ||
 
         /^question\s*\d+/i.test(line) ||
 
-        /^\d+[\.)]/.test(line) ||
+        /^\d+\./.test(line) ||
 
-        /^\(\d+\)/.test(line) ||
-
-        /^[ivxlcdm]+[\.)]/i.test(line)
+        /^\d+\)/.test(line)
 
     );
 
 }
-// ========================================================
-// Clean Question
-// ========================================================
+
+// ======================================================
+// Remove Question Number
+// ======================================================
 
 function cleanQuestion(line){
 
     return line
 
-        .replace(/^q\.?\s*\d+\s*[:.)-]?\s*/i,"")
+        .replace(/^q\s*\d+\.?\s*/i,"")
 
-        .replace(/^question\s*\d+\s*[:.)-]?\s*/i,"")
+        .replace(/^question\s*\d+\.?\s*/i,"")
 
-        .replace(/^\d+\s*[.)-]\s*/,"")
+        .replace(/^\d+\.\s*/,"")
 
-        .replace(/^\(\d+\)\s*/,"")
-
-        .replace(/^[ivxlcdm]+[.)]\s*/i,"")
+        .replace(/^\d+\)\s*/,"")
 
         .trim();
 
 }
 /*=========================================================
- Parser Version 2.0
- Part 3 : Question Processing
+ AI Question Paper Generator
+ Parser Version 3.0
+ Part 3 : Validation & Question Processing
 =========================================================*/
 
-// =====================================================
+// ======================================================
 // Ignore unwanted lines
-// =====================================================
+// ======================================================
 
 function ignoreLine(line){
 
-    line = line.trim().toLowerCase();
+    line=line.toLowerCase().trim();
 
-    const ignore = [
+    const ignore=[
 
         "kendriya vidyalaya",
         "pm shri",
-        "computer science",
         "class xii",
         "class 12",
-        "sample paper",
+        "computer science",
         "question bank",
+        "sample paper",
         "maximum marks",
         "time allowed",
         "general instructions",
         "instructions",
         "page"
+
     ];
 
-    return ignore.some(word => line.includes(word));
+    return ignore.some(x=>line.includes(x));
 
 }
 
-// =====================================================
+// ======================================================
 // Detect Question Type
-// =====================================================
+// ======================================================
 
 function detectQuestionType(question){
 
-    const q = question.toLowerCase();
-
-    if(q.includes("mcq"))
-        return "MCQ";
+    const q=question.toLowerCase();
 
     if(q.includes("assertion"))
         return "Assertion";
 
-    if(q.includes("case study"))
-        return "Case Study";
+    if(q.includes("reason"))
+        return "Assertion";
+
+    if(q.includes("mcq"))
+        return "MCQ";
+
+    if(q.includes("choose"))
+        return "MCQ";
 
     if(q.includes("sql"))
         return "SQL";
@@ -451,39 +447,83 @@ function detectQuestionType(question){
     if(q.includes("program"))
         return "Programming";
 
+    if(q.includes("output"))
+        return "Programming";
+
+    if(q.includes("case study"))
+        return "Case Study";
+
     return "Theory";
 
 }
 
-// =====================================================
+// ======================================================
 // Detect Difficulty
-// =====================================================
+// ======================================================
 
 function detectDifficulty(question){
 
-    const words = question.split(" ").length;
+    const words=question.split(/\s+/).length;
 
-    if(words <= 8)
+    if(words<=8)
         return "Easy";
 
-    if(words <= 18)
+    if(words<=18)
         return "Medium";
 
     return "Hard";
 
 }
 
-// =====================================================
+// ======================================================
+// Validate Question Bank
+// ======================================================
+
+function validateQuestions(){
+
+    questionBank=questionBank.filter(function(q){
+
+        if(!q.question)
+            return false;
+
+        if(ignoreLine(q.question))
+            return false;
+
+        if(q.question.length<8)
+            return false;
+
+        q.question=q.question.trim();
+
+        q.type=detectQuestionType(q.question);
+
+        q.difficulty=detectDifficulty(q.question);
+
+        if(!q.chapter)
+            q.chapter="General";
+
+        if(!q.section)
+            q.section="A";
+
+        if(!q.marks)
+            q.marks=1;
+
+        return true;
+
+    });
+
+}
+
+// ======================================================
 // Remove Duplicate Questions
-// =====================================================
+// ======================================================
 
 function removeDuplicates(){
 
-    const seen = new Set();
+    const seen=new Set();
 
-    questionBank = questionBank.filter(q=>{
+    questionBank=questionBank.filter(function(q){
 
-        const key = q.question.toLowerCase().trim();
+        const key=q.question.toLowerCase().trim();
 
         if(seen.has(key))
             return false;
@@ -496,76 +536,35 @@ function removeDuplicates(){
 
 }
 
-// =====================================================
-// Validate Questions
-// =====================================================
-
-function validateQuestions(){
-
-    questionBank = questionBank.filter(q=>{
-
-        if(!q.question) return false;
-
-        if(q.question.length < 10) return false;
-
-        if(!q.chapter)
-            q.chapter = "General";
-
-        if(!q.section)
-            q.section = "A";
-
-        if(!q.marks)
-            q.marks = 1;
-
-        q.type = detectQuestionType(q.question);
-
-        q.difficulty = detectDifficulty(q.question);
-
-        return true;
-
-    });
-
-}
-
-// =====================================================
+// ======================================================
 // Sort Question Bank
-// =====================================================
+// ======================================================
 
 function sortQuestionBank(){
 
-    questionBank.sort((a,b)=>{
+    questionBank.sort(function(a,b){
 
-        if(a.chapter === b.chapter){
+        if(a.chapter!==b.chapter)
+            return a.chapter.localeCompare(b.chapter);
 
-            if(a.marks === b.marks){
+        if(a.marks!==b.marks)
+            return a.marks-b.marks;
 
-                return a.question.localeCompare(b.question);
-
-            }
-
-            return a.marks - b.marks;
-
-        }
-
-        return a.chapter.localeCompare(b.chapter);
+        return a.question.localeCompare(b.question);
 
     });
 
 }
-/*=========================================================
- Parser Version 2.0
- Part 4 : Storage, Statistics & Utility Functions
-=========================================================*/
 
-// =====================================================
+// ======================================================
 // Finalize Question Bank
-// =====================================================
+// ======================================================
 
 function finalizeQuestionBank(){
 
-    console.log("Before Validation");
-    console.table(questionBank);
+    console.log("Questions Before Validation");
 
+    console.table(questionBank);
 
     validateQuestions();
 
@@ -573,141 +572,109 @@ function finalizeQuestionBank(){
 
     sortQuestionBank();
 
-
-    localStorage.setItem(
-        "questionBank",
-        JSON.stringify(questionBank)
-    );
-
-
-    console.log("Saved Questions:", questionBank);
-
-
-    showStatistics();
+    saveQuestionBank();
 
 }
-// =====================================================
+/*=========================================================
+ AI Question Paper Generator
+ Parser Version 3.0
+ Part 4 : Storage, Statistics & Utility Functions
+=========================================================*/
+
+// ======================================================
 // Save Question Bank
-// =====================================================
+// ======================================================
 
 function saveQuestionBank(){
 
     localStorage.setItem(
-
         "questionBank",
-
         JSON.stringify(questionBank)
-
     );
 
     showStatistics();
 
 }
 
-// =====================================================
-// Statistics
-// =====================================================
+// ======================================================
+// Show Statistics
+// ======================================================
 
 function showStatistics(){
 
-    const chapters = new Set();
+    const chapters=new Set();
 
-    const marksCount = {
-
+    const marksCount={
         1:0,
         2:0,
         3:0,
         4:0,
         5:0
-
     };
 
-    questionBank.forEach(q=>{
+    questionBank.forEach(function(q){
 
         chapters.add(q.chapter);
 
-        if(marksCount[q.marks] !== undefined){
-
+        if(marksCount[q.marks]!==undefined)
             marksCount[q.marks]++;
-
-        }
 
     });
 
     updateStatus(
 
-    `
-    <h4>✅ Question Bank Loaded Successfully</h4>
+`
+<h4>✅ Question Bank Loaded Successfully</h4>
 
-    <hr>
+<hr>
 
-    <b>Total Questions :</b> ${questionBank.length}<br>
+<b>Total Questions :</b> ${questionBank.length}<br>
+<b>Total Chapters :</b> ${chapters.size}<br><br>
 
-    <b>Total Chapters :</b> ${chapters.size}<br><br>
+<table class="table table-bordered">
 
-    <table class="table table-bordered">
+<tr>
+<th>Marks</th>
+<th>Questions</th>
+</tr>
 
-        <tr>
+<tr>
+<td>1 Mark</td>
+<td>${marksCount[1]}</td>
+</tr>
 
-            <th>Marks</th>
+<tr>
+<td>2 Marks</td>
+<td>${marksCount[2]}</td>
+</tr>
 
-            <th>Questions</th>
+<tr>
+<td>3 Marks</td>
+<td>${marksCount[3]}</td>
+</tr>
 
-        </tr>
+<tr>
+<td>4 Marks</td>
+<td>${marksCount[4]}</td>
+</tr>
 
-        <tr>
+<tr>
+<td>5 Marks</td>
+<td>${marksCount[5]}</td>
+</tr>
 
-            <td>1 Mark</td>
+</table>
 
-            <td>${marksCount[1]}</td>
+`,
+"success"
 
-        </tr>
-
-        <tr>
-
-            <td>2 Marks</td>
-
-            <td>${marksCount[2]}</td>
-
-        </tr>
-
-        <tr>
-
-            <td>3 Marks</td>
-
-            <td>${marksCount[3]}</td>
-
-        </tr>
-
-        <tr>
-
-            <td>4 Marks</td>
-
-            <td>${marksCount[4]}</td>
-
-        </tr>
-
-        <tr>
-
-            <td>5 Marks</td>
-
-            <td>${marksCount[5]}</td>
-
-        </tr>
-
-    </table>
-
-    `,
-
-    "success"
-
-    );
+);
 
 }
 
-// =====================================================
+// ======================================================
 // Get Chapters
-// =====================================================
+// ======================================================
 
 function getChapters(){
 
@@ -715,61 +682,64 @@ function getChapters(){
 
 }
 
-// =====================================================
+// ======================================================
 // Get Questions
-// =====================================================
+// ======================================================
 
 function getQuestions(chapter,marks){
 
-    return questionBank.filter(q=>
+    return questionBank.filter(function(q){
 
-        q.chapter===chapter &&
+        return (
 
-        q.marks===marks
+            q.chapter===chapter &&
 
-    );
+            q.marks===marks
+
+        );
+
+    });
 
 }
 
-// =====================================================
+// ======================================================
 // Random Question
-// =====================================================
+// ======================================================
 
 function randomQuestion(chapter,marks){
 
     const list=getQuestions(chapter,marks);
 
     if(list.length===0)
-
         return null;
 
     return list[
-
         Math.floor(Math.random()*list.length)
-
     ];
 
 }
 
-// =====================================================
-// Search Questions
-// =====================================================
+// ======================================================
+// Search Question
+// ======================================================
 
 function searchQuestion(keyword){
 
     keyword=keyword.toLowerCase();
 
-    return questionBank.filter(q=>
+    return questionBank.filter(function(q){
 
-        q.question.toLowerCase().includes(keyword)
+        return q.question
+                .toLowerCase()
+                .includes(keyword);
 
-    );
+    });
 
 }
 
-// =====================================================
+// ======================================================
 // Export Question Bank
-// =====================================================
+// ======================================================
 
 function exportQuestionBank(){
 
@@ -781,15 +751,13 @@ function exportQuestionBank(){
 
 }
 
-// =====================================================
+// ======================================================
 // Load Existing Question Bank
-// =====================================================
+// ======================================================
 
 window.onload=function(){
 
-    const saved=
-
-    localStorage.getItem("questionBank");
+    const saved=localStorage.getItem("questionBank");
 
     if(saved){
 
@@ -801,9 +769,9 @@ window.onload=function(){
 
 };
 
-// =====================================================
+// ======================================================
 // Debug Helper
-// =====================================================
+// ======================================================
 
 function showQuestionBank(){
 
