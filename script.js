@@ -234,21 +234,94 @@ function getSection(line){
 // Marks Detection
 // ----------------------------
 
+// -----------------------------------------
+// Detect Marks from Section Headings
+// -----------------------------------------
+
 function detectMarks(line){
 
-    let m;
+    line = line.trim().toLowerCase();
 
-    m = line.match(/^\[(\d)\]/);
+    // ------------------------
+    // SECTION A-E
+    // ------------------------
 
-    if(m) return parseInt(m[1]);
+    if(line.includes("section a")) return 1;
+    if(line.includes("section b")) return 2;
+    if(line.includes("section c")) return 3;
+    if(line.includes("section d")) return 4;
+    if(line.includes("section e")) return 5;
 
-    m = line.match(/\((\d)\)\s*$/);
+    // ------------------------
+    // Explicit Mark Headings
+    // ------------------------
 
-    if(m) return parseInt(m[1]);
+    if(line.includes("1 mark")) return 1;
+    if(line.includes("one mark")) return 1;
+
+    if(line.includes("2 mark")) return 2;
+    if(line.includes("two marks")) return 2;
+
+    if(line.includes("3 mark")) return 3;
+    if(line.includes("three marks")) return 3;
+
+    if(line.includes("4 mark")) return 4;
+    if(line.includes("four marks")) return 4;
+
+    if(line.includes("5 mark")) return 5;
+    if(line.includes("five marks")) return 5;
+
+    // ------------------------
+    // CBSE Question Types
+    // ------------------------
+
+    if(line.includes("very short answer"))
+        return 1;
+
+    if(line.includes("short answer type i"))
+        return 2;
+
+    if(line.includes("short answer type ii"))
+        return 3;
+
+    if(line.includes("long answer"))
+        return 5;
+
+    if(line.includes("case study"))
+        return 5;
+
+    if(line.includes("source based"))
+        return 4;
+
+    if(line.includes("assertion"))
+        return 1;
+
+    // ------------------------
+    // [1], [2], [3]
+    // ------------------------
+
+    let m = line.match(/^\[(\d)\]/);
+
+    if(m)
+        return parseInt(m[1]);
+
+    // ------------------------
+    // (3 Marks)
+    // ------------------------
+
+    m = line.match(/\((\d)\s*marks?\)/i);
+
+    if(m)
+        return parseInt(m[1]);
+
+    // ------------------------
+    // 3 Marks
+    // ------------------------
 
     m = line.match(/(\d)\s*marks?/i);
 
-    if(m) return parseInt(m[1]);
+    if(m)
+        return parseInt(m[1]);
 
     return null;
 
