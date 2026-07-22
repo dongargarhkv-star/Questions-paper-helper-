@@ -177,21 +177,24 @@ Generate Paper →
 <script src="script.js"></script>
 
 <script>
+
+// Load Question Bank from localStorage
 const qb = JSON.parse(localStorage.getItem("questionBank")) || [];
 
+// Create chapter list
 const chapters = [...new Set(qb.map(q => q.chapter))];
 
-console.log(qb);
 console.log("Question Bank:", qb);
 console.log("Chapters:", chapters);
-if(qb.length === 0){
+
+if(qb.length===0){
 
     alert("Please upload Question Bank first.");
 
     window.location.href="index.html";
 
 }
-const tbody =
+    const tbody =
 document.querySelector("#blueprintTable tbody");
 
 chapters.forEach(chapter=>{
