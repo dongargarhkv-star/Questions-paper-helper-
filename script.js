@@ -57,7 +57,11 @@ function extractQuestions() {
 
         .then(function (result) {
 
-            parseText(result.value);
+    console.log("========== RAW TEXT ==========");
+    console.log(result.value);
+    console.log("========== END RAW TEXT ==========");
+
+    parseText(result.value);
 
         })
 
