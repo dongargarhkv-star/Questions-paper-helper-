@@ -3,7 +3,7 @@
  Developed by Amit Yerpude
  Part 1 : DOCX Reader & Smart Parser
 =========================================================*/
-
+alert("script.js loaded");
 // ----------------------------
 // Global Variables
 // ----------------------------
