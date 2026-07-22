@@ -177,14 +177,18 @@ Generate Paper →
 <script src="script.js"></script>
 
 <script>
+const qb = JSON.parse(localStorage.getItem("questionBank")) || [];
 
+const chapters = [...new Set(qb.map(q => q.chapter))];
+
+console.log(qb);
 console.log("Question Bank:", qb);
 console.log("Chapters:", chapters);
 if(qb.length === 0){
 
-    document.getElementById("blueprintTable").style.display="none";
+    alert("Please upload Question Bank first.");
 
-    alert("Please upload a Question Bank first.");
+    window.location.href="index.html";
 
 }
 const tbody =
