@@ -7,7 +7,7 @@
 // ========================================================
 // Global Variables
 // ========================================================
-
+let chapters = new Set();
 let questionBank = [];
 
 let currentChapter = "General";
