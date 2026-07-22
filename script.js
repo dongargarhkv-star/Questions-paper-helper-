@@ -213,23 +213,23 @@ function parseParagraph(paragraph){
         // Detect Question
         // -----------------------
 
-        if(isQuestion(line)){
+console.log("LINE:", line);
 
-            questionBank.push({
+if(isQuestion(line)){
 
-                chapter: currentChapter,
+    console.log("QUESTION FOUND:", line);
 
-                section: currentSection,
+    questionBank.push({
 
-                marks: currentMarks,
+        chapter: currentChapter,
+        section: currentSection,
+        marks: currentMarks,
+        type: detectQuestionType(line),
+        question: cleanQuestion(line)
 
-                type: detectQuestionType(line),
+    });
 
-                question: cleanQuestion(line)
-
-            });
-
-        }
+}
 
     });
 
@@ -539,7 +539,8 @@ function sortQuestionBank(){
 // =====================================================
 // Finalize Question Bank
 // =====================================================
-
+console.log("Before Validation");
+console.table(questionBank);
 function finalizeQuestionBank(){
 
     validateQuestions();
@@ -547,6 +548,8 @@ function finalizeQuestionBank(){
     removeDuplicates();
 
     sortQuestionBank();
+ console.log("After Validation");
+console.table(questionBank);
 
     saveQuestionBank();
 
