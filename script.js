@@ -171,7 +171,7 @@ function parseParagraph(paragraph){
         // -----------------------
         // Detect Chapter
         // -----------------------
-
+        console.log(line);
         if(isChapter(line)){
 
             currentChapter = extractChapter(line);
