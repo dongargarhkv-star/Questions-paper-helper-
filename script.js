@@ -1,140 +1,166 @@
-// Smart parser for AI Question Paper Generator
+/*=========================================================
+ AI Question Paper Generator
+ Developed by Amit Yerpude
+ Part 1 : DOCX Reader & Smart Parser
+=========================================================*/
+
+// ----------------------------
+// Global Variables
+// ----------------------------
 
 let questionBank = [];
 
+const SECTION_MARKS = {
+    "A": 1,
+    "B": 2,
+    "C": 3,
+    "D": 4,
+    "E": 5
+};
+
+// ----------------------------
+// Upload DOCX
+// ----------------------------
+
 function extractQuestions() {
 
-    const input = document.getElementById("questionBank");
+    const fileInput = document.getElementById("questionBank");
 
-    if (!input || input.files.length === 0) {
+    if (!fileInput) {
+        alert("Question Bank input not found.");
+        return;
+    }
+
+    if (fileInput.files.length === 0) {
         alert("Please select a DOCX file.");
         return;
     }
 
+    const file = fileInput.files[0];
+
+    if (!file.name.toLowerCase().endsWith(".docx")) {
+        alert("Only DOCX files are supported.");
+        return;
+    }
+
+    updateStatus("Reading Question Bank...", "info");
+
     const reader = new FileReader();
 
-    reader.onload = function (event) {
+    reader.onload = function (e) {
 
         mammoth.extractRawText({
-            arrayBuffer: event.target.result
+
+            arrayBuffer: e.target.result
+
         })
-        .then(function(result){
+
+        .then(function (result) {
+
             parseText(result.value);
+
         })
-        .catch(function(error){
+
+        .catch(function (error) {
+
             console.error(error);
 
-            document.getElementById("status").className = "alert alert-danger";
-            document.getElementById("status").innerHTML =
-                "Unable to read the DOCX file.";
+            updateStatus(
+                "Unable to read DOCX file.",
+                "danger"
+            );
+
         });
 
     };
 
-    reader.readAsArrayBuffer(input.files[0]);
+    reader.readAsArrayBuffer(file);
 
 }
 
-function parseText(text){
+// ----------------------------
+// Status Box
+// ----------------------------
 
-    questionBank=[];
+function updateStatus(message, type = "info") {
 
-    let currentChapter="General";
+    const status = document.getElementById("status");
 
-    let currentMarks=1;
+    if (!status) return;
 
-    const lines=text.split(/\r?\n/);
+    status.className = "alert alert-" + type;
 
-    lines.forEach(line=>{
+    status.innerHTML = message;
 
-        line=line.trim();
+}
 
-        if(line==="") return;
+// ----------------------------
+// Main Parser
+// ----------------------------
 
-        // Detect chapter
+function parseText(text) {
 
-        if(/^chapter/i.test(line)){
+    questionBank = [];
 
-            currentChapter=line.replace(/chapter\s*:?\s*/i,"").trim();
+    let currentChapter = "General";
+
+    let currentMarks = 1;
+
+    let currentSection = "A";
+
+    const lines = cleanText(text);
+
+    lines.forEach(function(line){
+
+        // Detect Chapter
+
+        if(isChapter(line)){
+
+            currentChapter = getChapterName(line);
 
             return;
 
         }
 
-        // Detect marks written at end
+        // Detect Section
 
-        let endMarks=line.match(/\((\d)\)\s*$/);
+        if(isSection(line)){
 
-        if(endMarks){
+            currentSection = getSection(line);
 
-            currentMarks=parseInt(endMarks[1]);
+            currentMarks = SECTION_MARKS[currentSection];
 
-            line=line.replace(/\((\d)\)\s*$/,"").trim();
-
-        }
-
-        // Detect marks written like [3]
-
-        let bracket=line.match(/^\[(\d)\]/);
-
-        if(bracket){
-
-            currentMarks=parseInt(bracket[1]);
-
-            line=line.replace(/^\[\d\]/,"").trim();
+            return;
 
         }
 
-        // Remove Question Number
+        // Detect Marks
 
-        line=line.replace(/^Q\.?\s*\d+\s*[\.:]?\s*/i,"");
+        let detectedMarks = detectMarks(line);
 
-        line=line.replace(/^\d+[\.)]\s*/,"");
+        if(detectedMarks !== null){
 
-        // Ignore headings
+            currentMarks = detectedMarks;
 
-        if(line.length<5) return;
+            line = removeMarks(line);
 
-        // Save Question
+        }
 
-        questionBank.push({
+        // Extract Question
 
-            chapter:currentChapter,
+        let question = extractQuestion(line);
 
-            marks:currentMarks,
+        if(question){
 
-            question:line
+            questionBank.push({
 
-        });
+                chapter: currentChapter,
 
-    });
+                section: currentSection,
 
-    localStorage.setItem(
+                marks: currentMarks,
 
-        "questionBank",
-
-        JSON.stringify(questionBank)
-
-    );
-
-    document.getElementById("status").className="alert alert-success";
-
-    document.getElementById("status").innerHTML=
-
-        questionBank.length+" Questions Imported Successfully";
-
-}
-function getQuestions(chapter,marks){
-
-    return questionBank.filter(q=>
-
-        q.chapter===chapter &&
-
-        q.marks===marks
-
-    );
-
-}                question: question
+                question: question
 
             });
 
@@ -142,7 +168,228 @@ function getQuestions(chapter,marks){
 
     });
 
-    // Save in Browser
+    removeDuplicateQuestions();
+
+    saveQuestionBank();
+
+}
+
+// ----------------------------
+// Clean Text
+// ----------------------------
+
+function cleanText(text){
+
+    return text
+
+        .replace(/\r/g,"\n")
+
+        .split("\n")
+
+        .map(x=>x.trim())
+
+        .filter(x=>x.length>0);
+
+}
+
+// ----------------------------
+// Chapter Detection
+// ----------------------------
+
+function isChapter(line){
+
+    return /^(chapter|unit|lesson)/i.test(line);
+
+}
+
+function getChapterName(line){
+
+    return line
+
+        .replace(/^(chapter|unit|lesson)\s*:?\s*/i,"")
+
+        .trim();
+
+}
+
+// ----------------------------
+// Section Detection
+// ----------------------------
+
+function isSection(line){
+
+    return /^section\s+[A-E]/i.test(line);
+
+}
+
+function getSection(line){
+
+    const match = line.match(/[A-E]/i);
+
+    return match ? match[0].toUpperCase() : "A";
+
+}
+
+// ----------------------------
+// Marks Detection
+// ----------------------------
+
+function detectMarks(line){
+
+    let m;
+
+    m = line.match(/^\[(\d)\]/);
+
+    if(m) return parseInt(m[1]);
+
+    m = line.match(/\((\d)\)\s*$/);
+
+    if(m) return parseInt(m[1]);
+
+    m = line.match(/(\d)\s*marks?/i);
+
+    if(m) return parseInt(m[1]);
+
+    return null;
+
+}
+
+function removeMarks(line){
+
+    return line
+
+        .replace(/^\[\d\]/,"")
+
+        .replace(/\(\d\)\s*$/,"")
+
+        .replace(/\d\s*marks?/i,"")
+
+        .trim();
+
+}
+/*=========================================================
+ Part 2 : Smart Question Extraction & Storage
+=========================================================*/
+
+// ----------------------------------------------------
+// Extract Question from a Line
+// ----------------------------------------------------
+
+function extractQuestion(line){
+
+    if(!line) return null;
+
+    line = line.trim();
+
+    // Remove question numbering
+
+    line = line.replace(/^Q(?:uestion)?\.?\s*\d+\s*[:.)-]?\s*/i,"");
+
+    line = line.replace(/^\d+\s*[.)-]\s*/,"");
+
+    line = line.replace(/^[A-Z]\.\s*/,"");
+
+    line = line.replace(/^[ivxlcdm]+\.\s*/i,"");
+
+    // Remove bullets
+
+    line = line.replace(/^[•●▪►■]\s*/,"");
+
+    // Ignore headings
+
+    if(ignoreLine(line))
+        return null;
+
+    // Very short line
+
+    if(line.length < 8)
+        return null;
+
+    return line;
+
+}
+
+// ----------------------------------------------------
+// Ignore unwanted lines
+// ----------------------------------------------------
+
+function ignoreLine(line){
+
+    const ignorePatterns=[
+
+        /^kendriya vidyalaya/i,
+
+        /^pm shri/i,
+
+        /^maximum marks/i,
+
+        /^max marks/i,
+
+        /^time allowed/i,
+
+        /^time\s*:/i,
+
+        /^class\s*:/i,
+
+        /^subject\s*:/i,
+
+        /^page\s+\d+/i,
+
+        /^general instructions/i,
+
+        /^instructions/i,
+
+        /^section\s+[A-E]/i,
+
+        /^chapter/i,
+
+        /^unit/i,
+
+        /^lesson/i,
+
+        /^computer science/i,
+
+        /^sample question bank/i
+
+    ];
+
+    return ignorePatterns.some(pattern=>pattern.test(line));
+
+}
+
+// ----------------------------------------------------
+// Remove Duplicate Questions
+// ----------------------------------------------------
+
+function removeDuplicateQuestions(){
+
+    const unique=[];
+
+    const seen=new Set();
+
+    questionBank.forEach(q=>{
+
+        const key=q.question.toLowerCase().trim();
+
+        if(!seen.has(key)){
+
+            seen.add(key);
+
+            unique.push(q);
+
+        }
+
+    });
+
+    questionBank=unique;
+
+}
+
+// ----------------------------------------------------
+// Save Question Bank
+// ----------------------------------------------------
+
+function saveQuestionBank(){
 
     localStorage.setItem(
 
@@ -152,25 +399,78 @@ function getQuestions(chapter,marks){
 
     );
 
-    document.getElementById("status").className="alert alert-success";
-
-    document.getElementById("status").innerHTML=
-
-        "<strong>"+questionBank.length+
-
-        "</strong> Questions Imported Successfully.";
-
-    console.log(questionBank);
+    showStatistics();
 
 }
 
-// ------------------------------------------
-// Get Available Chapters
-// ------------------------------------------
+// ----------------------------------------------------
+// Statistics
+// ----------------------------------------------------
+
+function showStatistics(){
+
+    let chapters=new Set();
+
+    let markCount={
+
+        1:0,
+
+        2:0,
+
+        3:0,
+
+        4:0,
+
+        5:0
+
+    };
+
+    questionBank.forEach(q=>{
+
+        chapters.add(q.chapter);
+
+        if(markCount[q.marks]!=undefined)
+
+            markCount[q.marks]++;
+
+    });
+
+    updateStatus(
+
+        `
+        <h5>Question Bank Loaded Successfully</h5>
+
+        <hr>
+
+        <b>Total Questions :</b> ${questionBank.length}<br>
+
+        <b>Total Chapters :</b> ${chapters.size}<br><br>
+
+        <b>1 Mark :</b> ${markCount[1]}<br>
+
+        <b>2 Marks :</b> ${markCount[2]}<br>
+
+        <b>3 Marks :</b> ${markCount[3]}<br>
+
+        <b>4 Marks :</b> ${markCount[4]}<br>
+
+        <b>5 Marks :</b> ${markCount[5]}
+
+        `,
+
+        "success"
+
+    );
+
+}
+
+// ----------------------------------------------------
+// Get All Chapters
+// ----------------------------------------------------
 
 function getChapters(){
 
-    let chapters=[];
+    const chapters=[];
 
     questionBank.forEach(q=>{
 
@@ -184,9 +484,9 @@ function getChapters(){
 
 }
 
-// ------------------------------------------
-// Get Questions by Chapter & Marks
-// ------------------------------------------
+// ----------------------------------------------------
+// Get Questions
+// ----------------------------------------------------
 
 function getQuestions(chapter,marks){
 
@@ -195,6 +495,269 @@ function getQuestions(chapter,marks){
         q.chapter===chapter &&
 
         q.marks===marks
+
+    );
+
+}
+
+// ----------------------------------------------------
+// Debug Helper
+// ----------------------------------------------------
+
+function showQuestionBank(){
+
+    console.table(questionBank);
+
+}
+
+// ----------------------------------------------------
+// Load Existing Question Bank
+// ----------------------------------------------------
+
+window.onload=function(){
+
+    const saved=
+
+        localStorage.getItem("questionBank");
+
+    if(saved){
+
+        questionBank=JSON.parse(saved);
+
+        if(questionBank.length>0)
+
+            showStatistics();
+
+    }
+
+};
+/*=========================================================
+ Part 3 : Smart Detection & Utility Functions
+=========================================================*/
+
+// --------------------------------------------------
+// Detect Question Type
+// --------------------------------------------------
+
+function detectQuestionType(question){
+
+    const q = question.toLowerCase();
+
+    if(q.includes("assertion") && q.includes("reason"))
+        return "Assertion-Reason";
+
+    if(q.includes("case study"))
+        return "Case Study";
+
+    if(q.includes("mcq"))
+        return "MCQ";
+
+    if(q.includes("write a program"))
+        return "Programming";
+
+    if(q.includes("python"))
+        return "Programming";
+
+    if(q.includes("sql"))
+        return "Database";
+
+    return "Theory";
+
+}
+
+// --------------------------------------------------
+// Assign Question Type
+// --------------------------------------------------
+
+function classifyQuestions(){
+
+    questionBank.forEach(q=>{
+
+        q.type = detectQuestionType(q.question);
+
+    });
+
+}
+
+// --------------------------------------------------
+// Validate Question Bank
+// --------------------------------------------------
+
+function validateQuestionBank(){
+
+    questionBank = questionBank.filter(q=>{
+
+        if(!q.question) return false;
+
+        if(q.question.length<8) return false;
+
+        if(!q.chapter) q.chapter="General";
+
+        if(!q.marks) q.marks=1;
+
+        return true;
+
+    });
+
+}
+
+// --------------------------------------------------
+// Sort Questions
+// --------------------------------------------------
+
+function sortQuestionBank(){
+
+    questionBank.sort((a,b)=>{
+
+        if(a.chapter===b.chapter)
+
+            return a.marks-b.marks;
+
+        return a.chapter.localeCompare(b.chapter);
+
+    });
+
+}
+
+// --------------------------------------------------
+// Marks Statistics
+// --------------------------------------------------
+
+function marksStatistics(){
+
+    let result={};
+
+    questionBank.forEach(q=>{
+
+        if(!result[q.marks])
+
+            result[q.marks]=0;
+
+        result[q.marks]++;
+
+    });
+
+    return result;
+
+}
+
+// --------------------------------------------------
+// Chapter Statistics
+// --------------------------------------------------
+
+function chapterStatistics(){
+
+    let result={};
+
+    questionBank.forEach(q=>{
+
+        if(!result[q.chapter])
+
+            result[q.chapter]=0;
+
+        result[q.chapter]++;
+
+    });
+
+    return result;
+
+}
+
+// --------------------------------------------------
+// Search Questions
+// --------------------------------------------------
+
+function searchQuestion(keyword){
+
+    keyword=keyword.toLowerCase();
+
+    return questionBank.filter(q=>
+
+        q.question.toLowerCase().includes(keyword)
+
+    );
+
+}
+
+// --------------------------------------------------
+// Random Question
+// --------------------------------------------------
+
+function randomQuestion(chapter,marks){
+
+    const list=getQuestions(chapter,marks);
+
+    if(list.length===0)
+
+        return null;
+
+    return list[
+
+        Math.floor(Math.random()*list.length)
+
+    ];
+
+}
+
+// --------------------------------------------------
+// Export Question Bank
+// --------------------------------------------------
+
+function exportQuestionBank(){
+
+    console.log(
+
+        JSON.stringify(questionBank,null,4)
+
+    );
+
+}
+
+// --------------------------------------------------
+// Reset Question Bank
+// --------------------------------------------------
+
+function clearQuestionBank(){
+
+    if(confirm("Delete uploaded Question Bank?")){
+
+        questionBank=[];
+
+        localStorage.removeItem("questionBank");
+
+        updateStatus(
+
+            "Question Bank Deleted.",
+
+            "warning"
+
+        );
+
+    }
+
+}
+
+// --------------------------------------------------
+// Final Processing
+// --------------------------------------------------
+
+function finalizeQuestionBank(){
+
+    validateQuestionBank();
+
+    removeDuplicateQuestions();
+
+    classifyQuestions();
+
+    sortQuestionBank();
+
+    saveQuestionBank();
+
+    console.log(
+
+        "Question Bank Ready",
+
+        questionBank
 
     );
 
