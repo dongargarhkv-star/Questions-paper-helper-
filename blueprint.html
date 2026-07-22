@@ -178,47 +178,71 @@ Generate Paper →
 
 <script>
 
-const qb =
-JSON.parse(localStorage.getItem("questionBank")) || [];
-
-const chapters =
-[...new Set(qb.map(q => q.chapter))];
-
-console.log("Question Bank:", questionBank);
+console.log("Question Bank:", qb);
 console.log("Chapters:", chapters);
+if(qb.length === 0){
 
+    document.getElementById("blueprintTable").style.display="none";
+
+    alert("Please upload a Question Bank first.");
+
+}
 const tbody =
 document.querySelector("#blueprintTable tbody");
 
 chapters.forEach(chapter=>{
 
-let row=`
+    function count(mark){
 
-<tr>
+        return qb.filter(q=>
 
-<td>
+            q.chapter===chapter &&
 
-${chapter}
+            q.marks===mark
 
-</td>
+        ).length;
 
-<td><input type="number" class="form-control mark1" value="0" min="0"></td>
+    }
 
-<td><input type="number" class="form-control mark2" value="0" min="0"></td>
+    let row = `
 
-<td><input type="number" class="form-control mark3" value="0" min="0"></td>
+    <tr>
 
-<td><input type="number" class="form-control mark4" value="0" min="0"></td>
+        <td><b>${chapter}</b></td>
 
-<td><input type="number" class="form-control mark5" value="0" min="0"></td>
+        <td>
+            <small>Available: ${count(1)}</small>
+            <input type="number" max="${count(1)}" class="form-control mark1" value="0" min="0">
+        </td>
 
-</tr>
+        <td>
+            <small>Available: ${count(2)}</small>
+            <input type="number" max="${count(2)}" class="form-control mark2" value="0" min="0">
+        </td>
 
-`;
+        <td>
+            <small>Available: ${count(3)}</small>
+            <input type="number" max="${count(3)}" class="form-control mark3" value="0" min="0">
+        </td>
 
-tbody.insertAdjacentHTML("beforeend", row);
+        <td>
+            <small>Available: ${count(4)}</small>
+            <input type="number" max="${count(4)}" class="form-control mark4" value="0" min="0">
+        </td>
+
+        <td>
+            <small>Available: ${count(5)}</small>
+            <input type="number" max="${count(5)}" class="form-control mark5" value="0" min="0">
+        </td>
+
+    </tr>
+
+    `;
+
+    tbody.insertAdjacentHTML("beforeend", row);
 
 });
+
 
 function calculateTotals(){
 
