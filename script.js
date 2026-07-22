@@ -341,9 +341,14 @@ function isMarksHeading(line){
 
 function isQuestion(line){
 
-    if(line.length<8) return false;
+    line = line.replace(/\uFEFF/g,"").trim();
 
-    if(ignoreLine(line)) return false;
+    if(line.length < 8)
+        return false;
+
+    if(ignoreLine(line))
+        return false;
+
 
     return (
 
@@ -351,16 +356,15 @@ function isQuestion(line){
 
         /^question\s*\d+/i.test(line) ||
 
-        /^\d+[.)]/.test(line) ||
+        /^\d+[\.)]/.test(line) ||
 
         /^\(\d+\)/.test(line) ||
 
-        /^[ivxlcdm]+[.)]/i.test(line)
+        /^[ivxlcdm]+[\.)]/i.test(line)
 
     );
 
 }
-
 // ========================================================
 // Clean Question
 // ========================================================
