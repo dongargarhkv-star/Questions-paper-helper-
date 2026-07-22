@@ -230,7 +230,6 @@ let lines = paragraph
 console.log("LINE:", line);
 
 if(isQuestion(line)){
- 
 
     console.log("QUESTION FOUND:", line);
 
@@ -245,7 +244,6 @@ if(isQuestion(line)){
     });
 
 }
-
     });
 
 }
