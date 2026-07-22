@@ -227,8 +227,8 @@ let lines = paragraph
         // Detect Question
         // -----------------------
 
-console.log("CHECK LINE:", line);
-
+//console.log("CHECK LINE:", line);
+console.log("TEST QUESTION CHECK:", line, isQuestion(line));
 if(line.startsWith("Q")){
 
     console.log("FORCE QUESTION:", line);
