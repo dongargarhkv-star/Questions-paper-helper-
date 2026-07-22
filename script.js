@@ -7,6 +7,7 @@
 // ========================================================
 // Global Variables
 // ========================================================
+alert("SCRIPT VERSION 3");
 let chapters = new Set();
 let questionBank = [];
 
