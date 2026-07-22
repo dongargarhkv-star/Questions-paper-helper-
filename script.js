@@ -553,10 +553,10 @@ function sortQuestionBank(){
 // =====================================================
 // Finalize Question Bank
 // =====================================================
+
+function finalizeQuestionBank(){
 console.log("Before Validation");
 console.table(questionBank);
-function finalizeQuestionBank(){
-
     validateQuestions();
 
     removeDuplicates();
