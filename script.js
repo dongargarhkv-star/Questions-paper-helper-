@@ -138,13 +138,27 @@ function parseText(text) {
 
         let detectedMarks = detectMarks(line);
 
-        if(detectedMarks !== null){
+         if(detectedMarks !== null){
 
-            currentMarks = detectedMarks;
+                currentMarks = detectedMarks;
 
-            line = removeMarks(line);
-
-        }
+                       // If this line is only a heading,
+                       // don't save it as a question.
+                   
+                       if(
+                           line.toLowerCase().includes("section") ||
+                           line.toLowerCase().includes("mark") ||
+                           line.toLowerCase().includes("very short") ||
+                           line.toLowerCase().includes("short answer") ||
+                           line.toLowerCase().includes("long answer") ||
+                           line.toLowerCase().includes("case study")
+                       ){
+                           return;
+                       }
+                   
+                       line = removeMarks(line);
+                   
+                   }
 
         // Extract Question
 
@@ -333,9 +347,19 @@ function removeMarks(line){
 
         .replace(/^\[\d\]/,"")
 
-        .replace(/\(\d\)\s*$/,"")
+        .replace(/\(\d+\s*marks?\)/i,"")
 
-        .replace(/\d\s*marks?/i,"")
+        .replace(/\d+\s*marks?/i,"")
+
+        .replace(/section\s+[a-e]/i,"")
+
+        .replace(/very short answer.*$/i,"")
+
+        .replace(/short answer.*$/i,"")
+
+        .replace(/long answer.*$/i,"")
+
+        .replace(/case study.*$/i,"")
 
         .trim();
 
