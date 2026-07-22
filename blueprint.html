@@ -177,14 +177,12 @@ Generate Paper →
 <script src="script.js"></script>
 
 <script>
-console.log(questionBank);
-console.log(chapters);
 
-const questionBank =
+const qb =
 JSON.parse(localStorage.getItem("questionBank")) || [];
 
 const chapters =
-[...new Set(questionBank.map(q => q.chapter))];
+[...new Set(qb.map(q => q.chapter))];
 
 console.log("Question Bank:", questionBank);
 console.log("Chapters:", chapters);
@@ -218,7 +216,7 @@ ${chapter}
 
 `;
 
-tbody.innerHTML+=row;
+tbody.insertAdjacentHTML("beforeend", row);
 
 });
 
