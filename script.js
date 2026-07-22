@@ -563,12 +563,17 @@ function finalizeQuestionBank(){
 
     sortQuestionBank();
 
-    saveQuestionBank();
+
+    localStorage.setItem(
+        "questionBank",
+        JSON.stringify(questionBank)
+    );
+
+
+    console.log("Saved Questions:", questionBank);
+
 
     showStatistics();
-
-    console.log("Final Question Bank");
-    console.table(questionBank);
 
 }
 
